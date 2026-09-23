@@ -1,7 +1,7 @@
 """Post one quote per day to a Slack channel via an Incoming Webhook.
 
-Picks a quote based on today's date, so it cycles through the whole list
-before repeating. No third-party packages needed.
+Cycles through quotes.json in order based on today's date, so every quote
+gets posted once before any repeat. No third-party packages needed.
 """
 import json
 import os
@@ -9,6 +9,10 @@ import sys
 import urllib.request
 from datetime import date
 from pathlib import Path
+
+# Name shown under each quote. A quote in quotes.json can override it
+# with its own "author" field.
+DEFAULT_AUTHOR = "Stephen R Hyde"
 
 WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 if not WEBHOOK_URL:
@@ -24,17 +28,17 @@ quotes = json.loads((Path(__file__).parent / "quotes.json").read_text(encoding="
 quote = quotes[date.today().toordinal() % len(quotes)]
 
 text = escape(quote["text"])
-author = escape(quote["author"])
+author = escape(quote.get("author", DEFAULT_AUTHOR))
+note = quote.get("note")
+
+lines = [f">“{text}”"]
+if note:
+    lines.append(f">_[{escape(note)}]_")
+lines.append(f">— *{author}*")
 
 payload = {
-    # Plain-text fallback used in notifications
-    "text": f"{text} — {author}",
-    "blocks": [
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f">_{text}_\n>— *{author}*"},
-        }
-    ],
+    "text": f"“{text}” — {author}",  # plain-text fallback for notifications
+    "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(lines)}}],
 }
 
 req = urllib.request.Request(
