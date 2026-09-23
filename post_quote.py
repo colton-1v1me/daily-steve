@@ -17,7 +17,7 @@ from make_image import make_image
 
 # Name shown on every poster. A quote in quotes.json can override it
 # with its own "author" field.
-DEFAULT_AUTHOR = "Stephen R Hyde"
+DEFAULT_AUTHOR = "S.R. Hyde"
 
 TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 CHANNEL = os.environ.get("SLACK_CHANNEL_ID")
